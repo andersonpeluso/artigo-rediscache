@@ -1,6 +1,6 @@
-namespace artigo_rediscache.Models
+namespace Gestor.RedisCache.Models
 {
-    public class Country
+    public class Regiao
     {
         public string Name { get; set; }
         public string Capital { get; set; }

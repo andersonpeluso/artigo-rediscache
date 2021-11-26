@@ -1,22 +1,23 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using artigo_rediscache.Models;
+using Gestor.RedisCache.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using ServiceStack.Redis;
 
-namespace artigo_rediscache.Controllers
+namespace Gestor.RedisCache.Controllers
 {
     [Route("api/[controller]")]
-    public class CountriesController : ControllerBase
+    public class CapitalController : ControllerBase
     {
         private readonly IDistributedCache _distributedCache;
         private const string CountriesKey = "Countries";
 
-        public CountriesController(IDistributedCache distributedCache)
+        public CapitalController(IDistributedCache distributedCache)
         {
             _distributedCache = distributedCache;
         }
@@ -42,7 +43,7 @@ namespace artigo_rediscache.Controllers
 
                         var responseData = await response.Content.ReadAsStringAsync();
 
-                        var countries = JsonConvert.DeserializeObject<List<Country>>(responseData);
+                        var countries = JsonConvert.DeserializeObject<List<Regiao>>(responseData);
 
                         var memoryCacheEntryOptions = new DistributedCacheEntryOptions
                         {
@@ -82,7 +83,9 @@ namespace artigo_rediscache.Controllers
 
                     var resultadoBusca = redisCliente.Get<ClienteDTO>(cliente1.CPF);
 
-                    return Ok();
+                    // return Created("http://example.org/myitem", new { Nome = "teste item" });
+
+                    return Created(string.Empty, string.Empty);
                 }
             }
             catch (Exception ex)
