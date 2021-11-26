@@ -6,6 +6,7 @@ using artigo_rediscache.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
+using ServiceStack.Redis;
 
 namespace artigo_rediscache.Controllers
 {
@@ -23,35 +24,90 @@ namespace artigo_rediscache.Controllers
         [HttpGet]
         public async Task<IActionResult> GetCountries()
         {
-            var countriesObject = await _distributedCache.GetStringAsync(CountriesKey);
-            
-            if (!string.IsNullOrWhiteSpace(countriesObject))
+            try
             {
-                return Ok(countriesObject);
-            } else
-            {
-                const string restCountriesUrl = "https://restcountries.eu/rest/v2/all";
+                var countriesObject = await _distributedCache.GetStringAsync(CountriesKey);
 
-                using (var httpClient = new HttpClient())
+                if (!string.IsNullOrWhiteSpace(countriesObject))
                 {
-                    var response = await httpClient.GetAsync(restCountriesUrl);
+                    return Ok(countriesObject);
+                }
+                else
+                {
+                    const string restCountriesUrl = "https://restcountries.eu/rest/v2/all";
 
-                    var responseData = await response.Content.ReadAsStringAsync();
-
-                    var countries = JsonConvert.DeserializeObject<List<Country>>(responseData);
-
-                    var memoryCacheEntryOptions = new DistributedCacheEntryOptions
+                    using (var httpClient = new HttpClient())
                     {
-                        AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(3600),
-                        SlidingExpiration = TimeSpan.FromSeconds(1200)
-                    };
+                        var response = await httpClient.GetAsync(restCountriesUrl);
 
-                    await _distributedCache.SetStringAsync(CountriesKey, responseData, memoryCacheEntryOptions);
+                        var responseData = await response.Content.ReadAsStringAsync();
 
-                    return Ok(countries);
+                        var countries = JsonConvert.DeserializeObject<List<Country>>(responseData);
+
+                        var memoryCacheEntryOptions = new DistributedCacheEntryOptions
+                        {
+                            AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(3600),
+                            SlidingExpiration = TimeSpan.FromSeconds(1200)
+                        };
+
+                        await _distributedCache.SetStringAsync(CountriesKey, responseData, memoryCacheEntryOptions);
+
+                        return Ok(countries);
+                    }
                 }
             }
-            
+            catch (Exception ex)
+            {
+                throw;
+            }
+
         }
+
+        [HttpGet(nameof(TesteRedis))]
+        public async Task<IActionResult> TesteRedis()
+        {
+            try
+            {
+                var cliente1 = new ClienteDTO { CPF = "12312312387", Endereco = "São Paulo/SP", Nome = "Anderson" };
+                var cliente2 = new ClienteDTO { CPF = "12312312388", Endereco = "Pelotas/RS", Nome = "Rodrigo" };
+
+                using (var redisCliente = new RedisClient("localhost:6379"))
+                {
+                    redisCliente.Set(cliente1.CPF, cliente1);
+
+                    // Tempo para apagar dados do cliente.
+                    //redisCliente.Set(cliente1.CPF, cliente1, new TimeSpan(0, 0, 10));
+
+                    redisCliente.Set(cliente2.CPF, cliente2);
+
+                    var resultadoBusca = redisCliente.Get<ClienteDTO>(cliente1.CPF);
+
+                    return Ok();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+        [HttpGet(nameof(BuscarRedis))]
+        public async Task<IActionResult> BuscarRedis(string chave)
+        {
+            try
+            {
+                using (var redisCliente = new RedisClient("localhost:6379"))
+                {
+                    var resultadoBusca = redisCliente.Get<ClienteDTO>(chave);
+
+                    return Ok(resultadoBusca);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
     }
 }
