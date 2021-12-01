@@ -70,7 +70,20 @@ namespace Gestor.RedisCache.Controllers
             try
             {
                 var cliente1 = new ClienteDTO { CPF = "12312312387", Endereco = "São Paulo/SP", Nome = "Anderson" };
+
+                LojaDTO loja1 = new LojaDTO();
+                loja1.Id = 01;
+                loja1.Descricao = "Loja 01 de teste do cliente 1";
+
+                cliente1.Lojas.Add(loja1);
+
                 var cliente2 = new ClienteDTO { CPF = "12312312388", Endereco = "Pelotas/RS", Nome = "Rodrigo" };
+
+                LojaDTO loja2 = new LojaDTO();
+                loja2.Id = 11;
+                loja2.Descricao = "Loja 02 de teste do cliente 1";
+
+                cliente2.Lojas.Add(loja2);
 
                 using (var redisCliente = new RedisClient("localhost:6379"))
                 {
@@ -79,7 +92,7 @@ namespace Gestor.RedisCache.Controllers
                     // Tempo para apagar dados do cliente.
                     //redisCliente.Set(cliente1.CPF, cliente1, new TimeSpan(0, 0, 10));
 
-                    redisCliente.Set(cliente2.CPF, cliente2);
+                    redisCliente.Set(cliente2.CPF, cliente2, new TimeSpan(0, 0, 15));
 
                     var resultadoBusca = redisCliente.Get<ClienteDTO>(cliente1.CPF);
 
@@ -88,7 +101,7 @@ namespace Gestor.RedisCache.Controllers
                     return Created(string.Empty, string.Empty);
                 }
             }
-            catch (Exception ex)
+            catch
             {
                 throw;
             }
@@ -106,7 +119,7 @@ namespace Gestor.RedisCache.Controllers
                     return Ok(resultadoBusca);
                 }
             }
-            catch (Exception ex)
+            catch
             {
                 throw;
             }
